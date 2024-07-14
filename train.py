@@ -9,9 +9,7 @@ from dataset import PetDataset
 from torchvision import transforms
 from torch.utils.data import DataLoader
 from model import UNet, MulticlassDiceLoss
-
-IMAGE_PATH = 'data/images'
-MASK_PATH = 'data/annotations/trimaps'
+from utils import save_graphs, save_sample_output
 
 def get_args():
     parser = argparse.ArgumentParser(description='PyTorch UNet Training')
@@ -21,10 +19,26 @@ def get_args():
     args = parser.parse_args()
     return args
 
-def _train(model, device, train_loader, optimizer, criterion):
-    model.train()
+def get_unet_type(args):
+    unet_type = ""
+    if args.max_pool:
+        unet_type += "MP"
+    else:
+        unet_type += "StrConv"
+    if args.transpose_conv:
+        unet_type += "_Tr"
+    else:
+        unet_type += "_Ups"
+    if args.cross_entropy_loss:
+        unet_type += "_CE"
+    else:
+        unet_type += "_Dice_Loss"
+    return unet_type
 
+def _train(model, device, train_loader, optimizer, criterion, train_losses):
+    model.train()
     pbar = tqdm(train_loader)
+    train_loss = 0
 
     for batch_idx, (data, target) in enumerate(pbar):
         data, target = data.to(device), target.to(device)
@@ -34,14 +48,19 @@ def _train(model, device, train_loader, optimizer, criterion):
         
         loss = criterion(pred, target)
 
+        train_loss += loss.item()
+
         loss.backward()
         optimizer.step()
 
         pbar.set_description(desc= f'Train: Loss={loss.item():0.4f} Batch_id={batch_idx}')
+    
+    train_losses.append(train_loss/len(train_loader))
 
-def _test(model, device, test_loader, criterion):
+def _test(model, device, test_loader, criterion, test_losses):
     # Set model to eval
     model.eval()
+    test_loss = 0
 
     # Disable gradient calculation
     with torch.no_grad():
@@ -51,27 +70,32 @@ def _test(model, device, test_loader, criterion):
             pred = model(data)
         
             loss = criterion(pred, target)
+            test_loss += loss.item()
+
+    test_loss /= len(test_loader.dataset)
+    test_losses.append(test_loss)
 
     # Print results
-    print('Test set: Average loss: {:.4f}'.format(loss))
+    print('Test set: Average loss: {:.4f}'.format(test_loss))
 
 def start_training(num_epochs, model, device, train_loader, test_loader, optimizer, criterion):
+    train_losses = []
+    test_losses = []
     for epoch in range(1, num_epochs+1):
-        _train(model, device, train_loader, optimizer, criterion)
-        _test(model, device, test_loader, criterion)
+        print(f'Epoch {epoch}')
+        _train(model, device, train_loader, optimizer, criterion, train_losses)
+        _test(model, device, test_loader, criterion, test_losses)
+    return train_losses, test_losses
 
 def main():
     args = get_args()
 
     os.makedirs('images', exist_ok=True)
 
+    unet_type = get_unet_type(args)
+
     cuda = torch.cuda.is_available()
     print("CUDA Available?", cuda)
-
-    image_list = glob(os.path.join(IMAGE_PATH, '*.jpg'))
-    image_list = [x.replace('\\', '/') for x in image_list]
-    mask_list = glob(os.path.join(MASK_PATH, '*.png'))
-    mask_list = [x.replace('\\', '/') for x in mask_list]
     
     image_transform = transforms.Compose([transforms.Resize((240, 240)), 
                                     transforms.ToTensor()])
@@ -101,7 +125,11 @@ def main():
     else:
         criterion = MulticlassDiceLoss(num_classes=3, softmax_dim=1)
 
-    start_training(25, model, device, train_dataloader, test_dataloader, optimizer, criterion)
+    train_losses, test_losses = start_training(25, model, device, train_dataloader, test_dataloader,
+                                               optimizer, criterion)
+    
+    save_graphs(train_losses, test_losses, f'images/{unet_type}_metrics.png')
+    save_sample_output(model, test_dataloader, device, f'images/{unet_type}_results.png', 10)
 
 if __name__ == "__main__":
     main()
