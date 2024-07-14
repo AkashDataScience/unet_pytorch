@@ -33,19 +33,20 @@ class DecoderMiniBlock(nn.Module):
         super().__init__()
         if is_transpose_conv:
             self.transition_layer = nn.ConvTranspose2d(in_channels, in_channels//2, kernel_size=3, 
-                                                       stride=3, padding=1, output_padding=1)
+                                                       stride=2, padding=1, output_padding=1)
         else:
             self.transition_layer = nn.Upsample(scale_factor=2, mode="bilinear", align_corners=True)
 
         self.conv1 = nn.Conv2d(in_channels, out_channels, kernel_size=3, padding=1)
         self.bn1 = nn.BatchNorm2d(out_channels)
-        self.conv2 = nn.Conv2d(out_channels, out_channels//2, kernel_size=3, padding=1)
-        self.bn2 = nn.BatchNorm2d(out_channels//2)
+        self.conv2 = nn.Conv2d(out_channels, out_channels, kernel_size=3, padding=1)
+        self.bn2 = nn.BatchNorm2d(out_channels)
         self.dropout = nn.Dropout(dropout)
         self.relu = nn.ReLU()
         
     def forward(self, x, skip_layer_input):
         x = self.transition_layer(x)
+        print(skip_layer_input.shape, x.shape)
         x = torch.cat([skip_layer_input, x], dim=1)
         x = self.bn1(self.relu(self.conv1(x)))
         x = self.bn2(self.relu(self.conv2(x)))
