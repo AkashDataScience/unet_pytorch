@@ -18,6 +18,8 @@ def get_args():
     parser.add_argument('--max_pool', action=argparse.BooleanOptionalAction)
     parser.add_argument('--transpose_conv', action=argparse.BooleanOptionalAction)
     parser.add_argument('--cross_entropy_loss', action=argparse.BooleanOptionalAction)
+    args = parser.parse_args()
+    return args
 
 def _train(model, device, train_loader, optimizer, criterion):
     model.train()
