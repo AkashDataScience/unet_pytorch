@@ -8,7 +8,7 @@ def save_sample_output(model, loader, device, path, image_no=2):
     with torch.no_grad():
         _, axes = plt.subplots(image_no, 3, figsize=(10, 10))
         for i in range(image_no):
-            images, labels, _ = next(dataiter)
+            images, labels = next(dataiter)
             images, labels = images.to(device), labels.to(device)
 
             # Original Image
