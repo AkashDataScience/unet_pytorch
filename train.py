@@ -29,8 +29,7 @@ def _train(model, device, train_loader, optimizer, criterion):
     for batch_idx, (data, target) in enumerate(pbar):
         data, target = data.to(device), target.to(device)
         optimizer.zero_grad()
-        target = target.squeeze(1)
-        target = target.to(dtype=torch.long)
+        
         pred = model(data)
         
         loss = criterion(pred, target)
@@ -57,10 +56,15 @@ def main():
     mask_list = glob(os.path.join(MASK_PATH, '*.png'))
     mask_list = [x.replace('\\', '/') for x in mask_list]
     
-    train_transform = transforms.Compose([transforms.Resize((240, 240)), 
+    image_transform = transforms.Compose([transforms.Resize((240, 240)), 
                                     transforms.ToTensor()])
+    
+    mask_transform = transforms.Compose([transforms.PILToTensor(),
+                                         transforms.Resize((240, 240)),
+                                         transforms.Lambda(lambda x: (x - 1).squeeze().type(torch.LongTensor))])
 
-    train_dataset = PetDataset(image_list, mask_list, train_transform)
+    train_dataset = PetDataset(root='./data', split='trainval', transform_img=image_transform, 
+                               transform_tar=mask_transform, download=True)
 
     train_dataloader = DataLoader(train_dataset, batch_size=32, shuffle=True, num_workers=4)
 

@@ -1,26 +1,26 @@
-from torch.utils.data import Dataset
+from torchvision.datasets import OxfordIIITPet
 from PIL import Image
 
-class PetDataset(Dataset):
-    def __init__(self, images, masks, transform=None):
+class PetDataset(OxfordIIITPet):
+    def __init__(self, root="./data", split='trainval', image_transform=None, mask_transform=None download=True):
         super().__init__()
-        self.images = images
-        self.masks = masks
-        self.transform = transform
+        self.image_transform = image_transform
+        self.mask_transform = mask_transform
 
     def __len__(self):
         return len(self.images)
     
     def __getitem__(self, idx):
-        image_path = self.images[idx]
-        mask_path = self.masks[idx]
+        image_path, label_path = self._images[idx], self._segs[idx]
+        
+        image = Image.open(image_path).convert("RGB")
+        mask = Image.open(label_path)
 
-        image = Image.open(image_path)
-        mask = Image.open(mask_path)
-
-        if self.transform:
+        if self.image_transform:
             image = self.transform(image)
-            mask = self.transform(mask) * 255.0 - 1.0
+        
+        if self.mask_transform:
+            mask = self.mask_transform(mask)
 
         return image, mask
         
