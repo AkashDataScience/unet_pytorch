@@ -3,7 +3,7 @@ from PIL import Image
 
 class PetDataset(OxfordIIITPet):
     def __init__(self, root="./data", split='trainval', image_transform=None, mask_transform=None, download=True):
-        super().__init__()
+        super().__init__(root=root, split=split, target_types='segmentation', download=download)
         self.image_transform = image_transform
         self.mask_transform = mask_transform
 
