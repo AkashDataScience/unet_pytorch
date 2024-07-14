@@ -17,7 +17,7 @@ class PetDataset(OxfordIIITPet):
         mask = Image.open(label_path)
 
         if self.image_transform:
-            image = self.transform(image)
+            image = self.image_transform(image)
         
         if self.mask_transform:
             mask = self.mask_transform(mask)
