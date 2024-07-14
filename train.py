@@ -39,9 +39,26 @@ def _train(model, device, train_loader, optimizer, criterion):
 
         pbar.set_description(desc= f'Train: Loss={loss.item():0.4f} Batch_id={batch_idx}')
 
-def start_training(num_epochs, model, device, train_loader, optimizer, criterion):
+def _test(model, device, test_loader, criterion):
+    # Set model to eval
+    model.eval()
+
+    # Disable gradient calculation
+    with torch.no_grad():
+        # iterate though data and calculate loss
+        for batch_idx, (data, target) in enumerate(test_loader):
+            data, target = data.to(device), target.to(device) # Store data and target to device
+            pred = model(data)
+        
+            loss = criterion(pred, target)
+
+    # Print results
+    print('Test set: Average loss: {:.4f}'.format(loss))
+
+def start_training(num_epochs, model, device, train_loader, test_loader, optimizer, criterion):
     for epoch in range(1, num_epochs+1):
         _train(model, device, train_loader, optimizer, criterion)
+        _test(model, device, test_loader, criterion)
 
 def main():
     args = get_args()
@@ -68,6 +85,11 @@ def main():
 
     train_dataloader = DataLoader(train_dataset, batch_size=32, shuffle=True, num_workers=4)
 
+    test_dataset = PetDataset(root='./data', split='test', image_transform=image_transform, 
+                              mask_transform=mask_transform, download=True)
+
+    test_dataloader = DataLoader(test_dataset, batch_size=32, shuffle=False, num_workers=4)
+
     device = torch.device("cuda" if cuda else "cpu")
     model = UNet(32, args.max_pool, args.transpose_conv, 3)
     model =  model.to(device)
@@ -79,7 +101,7 @@ def main():
     else:
         criterion = MulticlassDiceLoss(num_classes=3, softmax_dim=1)
 
-    start_training(25, model, device, train_dataloader, optimizer, criterion)
+    start_training(25, model, device, train_dataloader, test_dataloader, optimizer, criterion)
 
 if __name__ == "__main__":
     main()
