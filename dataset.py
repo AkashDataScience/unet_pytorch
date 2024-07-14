@@ -5,7 +5,7 @@ class PetDataset(Dataset):
     def __init__(self, images, masks, transform=None):
         super().__init__()
         self.images = images
-        self.masks = self.masks
+        self.masks = masks
         self.transform = transform
 
     def __len__(self):
