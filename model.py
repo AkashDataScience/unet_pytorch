@@ -3,7 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 class EncoderMiniBlock(nn.Module):
-    def __init__(self, in_channels, out_channels, is_max_pool, dropout):
+    def __init__(self, in_channels, out_channels, is_max_pool, dropout, is_transition):
         super().__init__()
         self.conv1 = nn.Conv2d(in_channels, out_channels, kernel_size=3, padding=1)
         self.bn1 = nn.BatchNorm2d(out_channels)
@@ -15,12 +15,16 @@ class EncoderMiniBlock(nn.Module):
             self.transition_layer = nn.MaxPool2d(2, 2)
         else:
             self.transition_layer = nn.Conv2d(out_channels, out_channels, kernel_size=3, stride=2, padding=1)
+        self.is_transition = is_transition
     
     def forward(self, x):
         x = self.bn1(self.relu(self.conv1(x)))
         x = self.bn2(self.relu(self.conv2(x)))
         x = self.dropout(x)
-        x1 = self.transition_layer(x)
+        if self.is_transition:
+            x1 = self.transition_layer(x)
+        else:
+            x1 = x
 
         return x1, x
 
@@ -28,7 +32,7 @@ class DecoderMiniBlock(nn.Module):
     def __init__(self, in_channels, out_channels, is_transpose_conv, dropout):
         super().__init__()
         if is_transpose_conv:
-            self.transition_layer = nn.ConvTranspose2d(in_channels, in_channels//2, kernel_size=3, 
+            self.transition_layer = nn.ConvTranspose2d(in_channels//2, in_channels//2, kernel_size=3, 
                                                        stride=3, padding=1, output_padding=1)
         else:
             self.transition_layer = nn.Upsample(scale_factor=2, mode="bilinear", align_corners=True)
@@ -51,11 +55,11 @@ class DecoderMiniBlock(nn.Module):
 class UNet(nn.Module):
     def __init__(self, n_filters, is_max_pool=True, is_transpose_conv=True, n_classes = 3):
         super().__init__()
-        self.cblock1 = EncoderMiniBlock(3, n_filters, dropout=0, is_max_pool=is_max_pool)
-        self.cblock2 = EncoderMiniBlock(n_filters, n_filters*2, dropout=0, is_max_pool=is_max_pool)
-        self.cblock3 = EncoderMiniBlock(n_filters*2, n_filters*4, dropout=0, is_max_pool=is_max_pool)
-        self.cblock4 = EncoderMiniBlock(n_filters*4, n_filters*8, dropout=0.3, is_max_pool=is_max_pool)
-        self.cblock5 = EncoderMiniBlock(n_filters*8, n_filters*16, dropout=0.3, is_max_pool=is_max_pool)
+        self.cblock1 = EncoderMiniBlock(3, n_filters, dropout=0, is_max_pool=is_max_pool, is_transition=True)
+        self.cblock2 = EncoderMiniBlock(n_filters, n_filters*2, dropout=0, is_max_pool=is_max_pool, is_transition=True)
+        self.cblock3 = EncoderMiniBlock(n_filters*2, n_filters*4, dropout=0, is_max_pool=is_max_pool, is_transition=True)
+        self.cblock4 = EncoderMiniBlock(n_filters*4, n_filters*8, dropout=0.3, is_max_pool=is_max_pool, is_transition=True)
+        self.cblock5 = EncoderMiniBlock(n_filters*8, n_filters*16, dropout=0.3, is_max_pool=is_max_pool, is_transition=False)
 
         self.ublock6 = DecoderMiniBlock(n_filters*16, n_filters*8, dropout=0, is_transpose_conv=is_transpose_conv)
         self.ublock7 = DecoderMiniBlock(n_filters*8, n_filters*4, dropout=0, is_transpose_conv=is_transpose_conv)
