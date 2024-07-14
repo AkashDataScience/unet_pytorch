@@ -29,9 +29,10 @@ def _train(model, device, train_loader, optimizer, criterion):
     for batch_idx, (data, target) in enumerate(pbar):
         data, target = data.to(device), target.to(device)
         optimizer.zero_grad()
-
+        target = target.squeeze(1)
+        target = target.to(dtype=torch.long)
         pred = model(data)
-
+        
         loss = criterion(pred, target)
 
         loss.backward()

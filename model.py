@@ -46,7 +46,6 @@ class DecoderMiniBlock(nn.Module):
         
     def forward(self, x, skip_layer_input):
         x = self.transition_layer(x)
-        print(skip_layer_input.shape, x.shape)
         x = torch.cat([skip_layer_input, x], dim=1)
         x = self.bn1(self.relu(self.conv1(x)))
         x = self.bn2(self.relu(self.conv2(x)))
@@ -68,7 +67,7 @@ class UNet(nn.Module):
         self.ublock9 = DecoderMiniBlock(n_filters*2, n_filters, dropout=0, is_transpose_conv=is_transpose_conv)
 
         self.conv10 = nn.Conv2d(n_filters, n_filters, kernel_size=3, padding=1)
-        self.conv11 = nn.Conv2d(n_filters, n_classes, kernel_size=1, padding=1)
+        self.conv11 = nn.Conv2d(n_filters, n_classes, kernel_size=1)
 
     def forward(self, x):
         x, c1 = self.cblock1(x)
