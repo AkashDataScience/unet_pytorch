@@ -8,7 +8,7 @@ class PetDataset(OxfordIIITPet):
         self.mask_transform = mask_transform
 
     def __len__(self):
-        return len(self.images)
+        return len(self._images)
     
     def __getitem__(self, idx):
         image_path, label_path = self._images[idx], self._segs[idx]
