@@ -28,7 +28,7 @@ class DecoderMiniBlock(nn.Module):
     def __init__(self, in_channels, out_channels, is_transpose_conv, dropout):
         super().__init__()
         if is_transpose_conv:
-            self.transition_layer = nn.ConvTranspose2d(in_channels//2, in_channels//2, kernel_size=3, 
+            self.transition_layer = nn.ConvTranspose2d(in_channels, in_channels//2, kernel_size=3, 
                                                        stride=3, padding=1, output_padding=1)
         else:
             self.transition_layer = nn.Upsample(scale_factor=2, mode="bilinear", align_corners=True)
