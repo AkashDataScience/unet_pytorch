@@ -65,6 +65,7 @@ def main():
 
     device = torch.device("cuda" if cuda else "cpu")
     model = UNet(32, args.max_pool, args.transpose_conv, 3)
+    model =  model.to(device)
 
     optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
 
