@@ -72,7 +72,7 @@ def _test(model, device, test_loader, criterion, test_losses):
             loss = criterion(pred, target)
             test_loss += loss.item()
 
-    test_loss /= len(test_loader.dataset)
+    test_loss /= len(test_loader)
     test_losses.append(test_loss)
 
     # Print results
@@ -125,7 +125,7 @@ def main():
     else:
         criterion = MulticlassDiceLoss(num_classes=3, softmax_dim=1)
 
-    train_losses, test_losses = start_training(25, model, device, train_dataloader, test_dataloader,
+    train_losses, test_losses = start_training(1, model, device, train_dataloader, test_dataloader,
                                                optimizer, criterion)
     
     save_graphs(train_losses, test_losses, f'images/{unet_type}_metrics.png')
