@@ -6,7 +6,7 @@ def save_sample_output(model, loader, device, path, image_no=2):
     dataiter = iter(loader)
 
     with torch.no_grad():
-        _, axes = plt.subplots(image_no, 3, figsize=(20, 8))
+        _, axes = plt.subplots(image_no, 3, figsize=(8, 20))
         for i in range(image_no):
             images, labels = next(dataiter)
             images, labels = images.to(device), labels.to(device)

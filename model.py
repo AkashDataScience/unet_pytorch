@@ -101,7 +101,7 @@ class MulticlassDiceLoss(nn.Module):
             probabilities = nn.Softmax(dim=self.softmax_dim)(logits)
         # end if
         targets_one_hot = torch.nn.functional.one_hot(targets, num_classes=self.num_classes)
-        print(targets_one_hot.shape)
+        
         # Convert from NHWC to NCHW
         targets_one_hot = targets_one_hot.permute(0, 3, 1, 2)
         
