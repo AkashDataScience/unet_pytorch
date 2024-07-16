@@ -132,6 +132,7 @@ def main():
     
     save_graphs(train_losses, test_losses, f'images/{unet_type}_metrics.png')
     save_sample_output(model, test_dataloader, device, f'images/{unet_type}_results.png', 10)
+    torch.save(model.state_dict(), f'{unet_type}_unet.pth')
 
 if __name__ == "__main__":
     main()
