@@ -13,6 +13,8 @@ from utils import save_graphs, save_sample_output
 
 def get_args():
     parser = argparse.ArgumentParser(description='PyTorch UNet Training')
+    parser.add_argument('--epochs', default=25, type=int, help="Number of training epochs e.g 25")
+    parser.add_argument('--batch_size', default=32, type=int, help="Number of images per batch e.g. 256")
     parser.add_argument('--max_pool', action=argparse.BooleanOptionalAction)
     parser.add_argument('--transpose_conv', action=argparse.BooleanOptionalAction)
     parser.add_argument('--cross_entropy_loss', action=argparse.BooleanOptionalAction)
@@ -107,12 +109,12 @@ def main():
     train_dataset = PetDataset(root='./data', split='trainval', image_transform=image_transform, 
                                mask_transform=mask_transform, download=True)
 
-    train_dataloader = DataLoader(train_dataset, batch_size=32, shuffle=True, num_workers=4)
+    train_dataloader = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True, num_workers=4)
 
     test_dataset = PetDataset(root='./data', split='test', image_transform=image_transform, 
                               mask_transform=mask_transform, download=True)
 
-    test_dataloader = DataLoader(test_dataset, batch_size=32, shuffle=False, num_workers=4)
+    test_dataloader = DataLoader(test_dataset, batch_size=args.batch_size, shuffle=False, num_workers=4)
 
     device = torch.device("cuda" if cuda else "cpu")
     model = UNet(32, args.max_pool, args.transpose_conv, 3)
@@ -125,7 +127,7 @@ def main():
     else:
         criterion = MulticlassDiceLoss(num_classes=3, softmax_dim=1)
 
-    train_losses, test_losses = start_training(25, model, device, train_dataloader, test_dataloader,
+    train_losses, test_losses = start_training(args.epochs, model, device, train_dataloader, test_dataloader,
                                                optimizer, criterion)
     
     save_graphs(train_losses, test_losses, f'images/{unet_type}_metrics.png')
