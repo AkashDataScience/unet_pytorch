@@ -35,7 +35,10 @@ class DecoderMiniBlock(nn.Module):
             self.transition_layer = nn.ConvTranspose2d(in_channels, in_channels//2, kernel_size=3, 
                                                        stride=2, padding=1, output_padding=1)
         else:
-            self.transition_layer = nn.Upsample(scale_factor=2, mode="bilinear", align_corners=True)
+            self.transition_layer = nn.Sequential(nn.Upsample(scale_factor=2, mode="bilinear", align_corners=True),
+                                                  nn.Conv2d(in_channels, in_channels//2, stride=1, padding=1),
+                                                  nn.BatchNorm2d(in_channels//2),
+                                                  nn.ReLU())
 
         self.conv1 = nn.Conv2d(in_channels, out_channels, kernel_size=3, padding=1)
         self.bn1 = nn.BatchNorm2d(out_channels)
