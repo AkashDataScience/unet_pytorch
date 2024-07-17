@@ -26,8 +26,8 @@
 
 ## :building_construction: Model Architecture
 The model is implemented based on U-Net: Convolutional Networks for Biomedical Image Segmentation.
-There are five encoder blocks each return output of before and after applying transition. Thre four
-decoder blocks using inputs from previout layer and corresponding block of encoder part. 
+There are five encoder blocks each return output of before and after applying transition. There are
+four decoder blocks using inputs from previous layer and corresponding block of encoder part. 
 
 ## :golfing: Training Options
 
